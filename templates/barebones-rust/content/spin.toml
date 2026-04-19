@@ -1,0 +1,52 @@
+# Spin manifest file (v3). Reference: https://spinframework.dev/v3/manifest-reference
+#
+# TEMPLATE: Replace placeholder values marked with {{...}} with your project details.
+
+spin_manifest_version = 2
+
+# ── APPLICATION METADATA ─────────────────────────────────────────────────────
+[application]
+name = "{{project-name | kebab_case}}"            # Your application name (lowercase, hyphens ok)
+version = "0.1.0"                                 # Semver version of your application
+authors = ["{{authors}}"]                         # Author name and email
+description = "{{project-description}}"           # Short description of what this app does
+
+
+# ── COMPONENTS AND TRIGGERS ──────────────────────────────────────────────────
+# Add new components:  spin add -t http-rust -o components/<component_name>
+# Components live under /components/ to keep the project organized.
+
+# Static file server — serves files from the /assets directory
+[[trigger.http]]
+route = "/static/..."
+component = "assets"
+
+[component.assets]
+source = { url = "https://github.com/spinframework/spin-fileserver/releases/download/v0.3.0/spin_static_fs.wasm", digest = "sha256:ef88708817e107bf49985c7cefe4dd1f199bf26f6727819183d5c996baa3d148" }
+files = [{ source = "assets", destination = "/" }]
+
+# API Explorer UI — Swagger-style endpoint tester (visit /api-explorer)
+[[trigger.http]]
+route = "/api-explorer"
+component = "api-explorer"
+
+[component.api-explorer]
+source = "target/wasm32-wasip1/release/api_explorer.wasm"
+allowed_outbound_hosts = []
+[component.api-explorer.build]
+command = "cargo build --target wasm32-wasip1 --release"
+workdir = "components/api-explorer"
+watch = ["src/**/*.rs", "Cargo.toml"]
+
+# Hello World component — starter HTTP handler (replace or extend)
+[[trigger.http]]
+route = "/hello/..."
+component = "hello"
+
+[component.hello]
+source = "target/wasm32-wasip1/release/hello.wasm"
+allowed_outbound_hosts = []                       # Add allowed hosts here, e.g. ["https://api.example.com"]
+[component.hello.build]
+command = "cargo build --target wasm32-wasip1 --release"
+workdir = "components/hello"
+watch = ["src/**/*.rs", "Cargo.toml"]

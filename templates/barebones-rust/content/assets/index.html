@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Endpoint Viewer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@0,100..900;1,100..900&family=Funnel+Sans:wght@300..800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #110a24;
+        --surface: #1a1035;
+        --surface-muted: #231745;
+        --text: #ede8f5;
+        --text-muted: #b8a9d4;
+        --accent: #a47de8;
+        --accent-2: #7c3aed;
+        --border: #2d1f5e;
+        --success: #34d399;
+        --danger: #f87171;
+        --shadow: 0 16px 42px rgba(0, 0, 0, 0.55);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Funnel Sans", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 8% -12%, rgba(124, 58, 237, 0.25) 0%, transparent 38%),
+          radial-gradient(circle at 90% -8%, rgba(164, 125, 232, 0.28) 0%, transparent 34%),
+          radial-gradient(circle at 50% 120%, rgba(91, 33, 182, 0.18) 0%, transparent 42%),
+          var(--bg);
+        min-height: 100vh;
+      }
+
+      .app {
+        width: min(1240px, 94vw);
+        margin: 24px auto;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(4px);
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding: 14px 20px;
+        background: linear-gradient(118deg, #1a1035, #2d1f5e 55%, #1e1145);
+        color: #ede8f5;
+        border-bottom: 1px solid #3a2870;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand-mark {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        background: linear-gradient(140deg, var(--accent), var(--accent-2));
+        box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4);
+      }
+
+      .topbar h1 {
+        margin: 0;
+        font-family: "Azeret Mono", monospace;
+        font-size: 1rem;
+        letter-spacing: 0.4px;
+      }
+
+      .topbar p {
+        margin: 2px 0 0;
+        font-size: 0.82rem;
+        color: #c4b5e0;
+      }
+
+      .server-pill {
+        font-family: "Azeret Mono", monospace;
+        font-size: 0.76rem;
+        color: #c4b5e0;
+        background: rgba(26, 16, 53, 0.7);
+        border: 1px solid #3a2870;
+        border-radius: 999px;
+        padding: 8px 12px;
+      }
+
+      .swagger-shell {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        min-height: 72vh;
+      }
+
+      .sidebar {
+        border-right: 1px solid var(--border);
+        background: linear-gradient(180deg, rgba(17, 10, 36, 0.6), rgba(26, 16, 53, 0.45));
+        padding: 14px;
+      }
+
+      .sidebar h2 {
+        margin: 0 0 10px;
+        font-family: "Azeret Mono", monospace;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: #d4c3f0;
+      }
+
+      .endpoint-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 8px;
+      }
+
+      .endpoint-item {
+        border: 1px solid var(--border);
+        background: rgba(26, 16, 53, 0.6);
+        border-radius: 10px;
+        padding: 10px;
+        cursor: pointer;
+        transition: border-color 0.2s ease, transform 0.2s ease;
+      }
+
+      .endpoint-item:hover {
+        border-color: var(--accent);
+      }
+
+      .endpoint-item.active {
+        border-color: var(--accent);
+        box-shadow: inset 0 0 0 1px rgba(164, 125, 232, 0.3);
+      }
+
+      .method {
+        display: inline-block;
+        min-width: 44px;
+        text-align: center;
+        padding: 2px 7px;
+        border-radius: 999px;
+        font-family: "Azeret Mono", monospace;
+        font-size: 0.72rem;
+        color: #110a24;
+        background: var(--accent);
+        margin-right: 8px;
+      }
+
+      .endpoint-path {
+        font-family: "Azeret Mono", monospace;
+        font-size: 0.8rem;
+      }
+
+      .endpoint-summary {
+        margin-top: 6px;
+        color: var(--text-muted);
+        font-size: 0.82rem;
+      }
+
+      .main-panel {
+        padding: 16px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: rgba(26, 16, 53, 0.5);
+        overflow: hidden;
+      }
+
+      .card-head {
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--border);
+        background: linear-gradient(95deg, rgba(124, 58, 237, 0.18), rgba(164, 125, 232, 0.18));
+        font-family: "Azeret Mono", monospace;
+        font-size: 0.8rem;
+      }
+
+      .card-body {
+        padding: 14px;
+      }
+
+      .operation-line {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .op-path {
+        font-family: "Azeret Mono", monospace;
+        font-size: 0.9rem;
+      }
+
+      .op-description {
+        margin: 10px 0 0;
+        color: var(--text-muted);
+      }
+
+      select {
+        appearance: none;
+        width: 100%;
+        border: 1px solid var(--border);
+        background: #130e28;
+        color: var(--text);
+        border-radius: 10px;
+        padding: 12px;
+        font-size: 0.95rem;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+      }
+
+      select:focus,
+      button:focus {
+        outline: 2px solid rgba(124, 58, 237, 0.55);
+        outline-offset: 2px;
+      }
+
+      button {
+        border: none;
+        background: linear-gradient(100deg, var(--accent), var(--accent-2));
+        color: #ede8f5;
+        padding: 12px 16px;
+        border-radius: 10px;
+        font-family: "Azeret Mono", monospace;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 10px 24px rgba(124, 58, 237, 0.3);
+      }
+
+      button:hover {
+        filter: brightness(1.08);
+      }
+
+      .meta {
+        display: flex;
+        gap: 16px;
+        margin: 8px 0 0;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        flex-wrap: wrap;
+      }
+
+      .status.ok {
+        color: var(--success);
+        font-weight: 700;
+      }
+
+      .status.error {
+        color: var(--danger);
+        font-weight: 700;
+      }
+
+      .content-view {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: linear-gradient(180deg, #110a24 0%, #150d2d 100%);
+        color: #d4c3f0;
+        min-height: 220px;
+        max-height: 48vh;
+        overflow: auto;
+      }
+
+      pre {
+        margin: 0;
+        padding: 16px;
+        font-family: "Azeret Mono", monospace;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      @media (max-width: 680px) {
+        .topbar {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .swagger-shell {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          border-right: none;
+          border-bottom: 1px solid var(--border);
+        }
+
+        .controls {
+          grid-template-columns: 1fr;
+        }
+
+        button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div>
+            <h1>Spin API Explorer</h1>
+            <p>Swagger-style view for testing local component endpoints</p>
+          </div>
+        </div>
+        <div class="server-pill">Server: http://127.0.0.1:3000</div>
+      </header>
+
+      <div class="swagger-shell">
+        <aside class="sidebar">
+          <h2>Endpoints</h2>
+          <ul id="endpointList" class="endpoint-list" aria-label="Endpoint list"></ul>
+        </aside>
+
+        <main class="main-panel">
+          <section class="card" aria-label="Operation details">
+            <div class="card-head">Operation</div>
+            <div class="card-body">
+              <div class="operation-line">
+                <span id="opMethod" class="method">GET</span>
+                <span id="opPath" class="op-path">/hello</span>
+              </div>
+              <p id="opSummary" class="op-description">Returns the endpoint response payload.</p>
+            </div>
+          </section>
+
+          <section class="card" aria-label="Try it out">
+            <div class="card-head">Try It Out</div>
+            <div class="card-body">
+              <div class="controls">
+                <select id="endpointSelect" aria-label="Choose endpoint"></select>
+                <button id="fetchBtn" type="button">Execute</button>
+              </div>
+
+              <div class="meta">
+                <div>URL: <span id="resolvedUrl">-</span></div>
+                <div>Status: <span id="status" class="status">Idle</span></div>
+                <div>Time: <span id="duration">-</span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card" aria-label="Server response">
+            <div class="card-head">Server Response</div>
+            <div class="card-body">
+              <section class="content-view" aria-label="Endpoint response content">
+                <pre id="responseBody">Click "Execute" to load data.</pre>
+              </section>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      const endpoints = [
+        {
+          method: "GET",
+          path: "/hello",
+          summary: "Returns the hello component response",
+        },
+      ];
+      const endpointList = document.getElementById("endpointList");
+      const endpointSelect = document.getElementById("endpointSelect");
+      const fetchBtn = document.getElementById("fetchBtn");
+      const opMethod = document.getElementById("opMethod");
+      const opPath = document.getElementById("opPath");
+      const opSummary = document.getElementById("opSummary");
+      const resolvedUrl = document.getElementById("resolvedUrl");
+      const statusEl = document.getElementById("status");
+      const durationEl = document.getElementById("duration");
+      const responseBody = document.getElementById("responseBody");
+
+      function renderSidebar(activePath) {
+        endpointList.innerHTML = "";
+        endpoints.forEach((endpoint) => {
+          const item = document.createElement("li");
+          item.className = "endpoint-item";
+          if (endpoint.path === activePath) {
+            item.classList.add("active");
+          }
+
+          item.innerHTML = `
+            <div>
+              <span class="method">${endpoint.method}</span>
+              <span class="endpoint-path">${endpoint.path}</span>
+            </div>
+            <div class="endpoint-summary">${endpoint.summary}</div>
+          `;
+
+          item.addEventListener("click", () => {
+            endpointSelect.value = endpoint.path;
+            syncOperationPanel(endpoint.path);
+            renderSidebar(endpoint.path);
+          });
+
+          endpointList.appendChild(item);
+        });
+      }
+
+      function syncOperationPanel(path) {
+        const endpoint = endpoints.find((entry) => entry.path === path) || endpoints[0];
+        opMethod.textContent = endpoint.method;
+        opPath.textContent = endpoint.path;
+        opSummary.textContent = endpoint.summary;
+      }
+
+      endpointSelect.innerHTML = "";
+      endpoints.forEach((endpoint) => {
+        const option = document.createElement("option");
+        option.value = endpoint.path;
+        option.textContent = `${endpoint.method} ${endpoint.path}`;
+        endpointSelect.appendChild(option);
+      });
+
+      syncOperationPanel(endpointSelect.value || endpoints[0].path);
+      renderSidebar(endpointSelect.value || endpoints[0].path);
+
+      endpointSelect.addEventListener("change", () => {
+        const selectedPath = endpointSelect.value;
+        syncOperationPanel(selectedPath);
+        renderSidebar(selectedPath);
+      });
+
+      function formatPayload(raw) {
+        try {
+          const json = JSON.parse(raw);
+          return JSON.stringify(json, null, 2);
+        } catch {
+          return raw;
+        }
+      }
+
+      async function fetchEndpoint() {
+        const path = endpointSelect.value || "/hello";
+        const url = new URL(path, window.location.origin).toString();
+        resolvedUrl.textContent = url;
+        statusEl.textContent = "Loading...";
+        statusEl.className = "status";
+        durationEl.textContent = "-";
+        responseBody.textContent = "Loading endpoint response...";
+
+        const start = performance.now();
+
+        try {
+          const res = await fetch(url);
+          const text = await res.text();
+          const elapsed = Math.round(performance.now() - start);
+
+          statusEl.textContent = `${res.status} ${res.statusText}`;
+          statusEl.className = res.ok ? "status ok" : "status error";
+          durationEl.textContent = `${elapsed} ms`;
+          responseBody.textContent = formatPayload(text);
+        } catch (err) {
+          const elapsed = Math.round(performance.now() - start);
+          statusEl.textContent = "Request failed";
+          statusEl.className = "status error";
+          durationEl.textContent = `${elapsed} ms`;
+          responseBody.textContent = `Unable to reach endpoint.\n\n${err.message}`;
+        }
+      }
+
+      fetchBtn.addEventListener("click", fetchEndpoint);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,14 @@
+# Cargo workspace — all components are workspace members.
+# Add new components to the members list after running:
+#   spin add -t http-rust -o components/<component_name>
+
+[workspace]
+resolver = "2"
+members = [
+  "components/hello",
+  "components/api-explorer",
+]
+
+[workspace.dependencies]
+anyhow = "1"
+spin-sdk = "5.2.0"

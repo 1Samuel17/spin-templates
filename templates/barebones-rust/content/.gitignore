@@ -1,0 +1,19 @@
+# Spin
+.spin/
+main.wasm
+
+# Rust / Cargo
+target/
+**/*.rs.bk
+Cargo.lock
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

@@ -1,0 +1,3 @@
+# Covered by root .gitignore — this file kept for components scaffolded by `spin add`
+target/
+.spin/

@@ -1,0 +1,6 @@
+manifest_version = "1"
+id = "barebones-rust"
+description = "A minimal Spin template with commonly used files, code, and API Explorer."
+
+[parameters]
+project-description = { type = "string",  prompt = "Description", default = "" }
